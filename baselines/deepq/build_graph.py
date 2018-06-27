@@ -182,7 +182,7 @@ def build_act(make_obs_ph, q_func, num_actions, scope="deepq", reuse=None, noisy
 
         eps = tf.get_variable("eps", (), initializer=tf.constant_initializer(0))
 
-        q_values = q_func(observations_ph.get(), num_actions, scope="q_func", noisy = noisy)
+        q_values = q_func(observations_ph.get(), num_actions, scope="q_func", noisy = noisy, bootstrap = bootstrap)
         if bootstrap:
             q_values = tf.gather(q_values, head)
         deterministic_actions = tf.argmax(q_values, axis=1)
@@ -204,8 +204,11 @@ def build_act(make_obs_ph, q_func, num_actions, scope="deepq", reuse=None, noisy
                              outputs=output_actions,
                              givens={update_eps_ph: -1.0, stochastic_ph: True},
                              updates=[update_eps_expr])
-        def act(ob, stochastic=True, update_eps=-1):
-            return _act(ob, stochastic, update_eps)
+        def act(ob, head = False, stochastic=True, update_eps=-1):
+            if head:
+                return _act(ob,head, stochastic, update_eps)
+            else:
+                return _act(ob, stochastic, update_eps)
         return act
 
 
@@ -398,11 +401,11 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=
         importance_weights_ph = tf.placeholder(tf.float32, [None], name="weight")
 
         # q network evaluation
-        q_t = q_func(obs_t_input.get(), num_actions, scope="q_func", noisy=noisy, reuse=True)  # reuse parameters from act
+        q_t = q_func(obs_t_input.get(), num_actions, scope="q_func", noisy=noisy, reuse=True, bootstrap=bootstrap)  # reuse parameters from act
         q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=tf.get_variable_scope().name + "/q_func")
 
         # target q network evalution
-        q_tp1 = q_func(obs_tp1_input.get(), num_actions, scope="target_q_func", noisy=noisy)
+        q_tp1 = q_func(obs_tp1_input.get(), num_actions, scope="target_q_func", noisy=noisy, bootstrap=bootstrap)
         target_q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=tf.get_variable_scope().name + "/target_q_func")
 
         # q scores for actions which we know were selected in the given state.
@@ -415,7 +418,7 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=
 
         # compute estimate of best possible value starting from state at t + 1
         if double_q:
-            q_tp1_using_online_net = q_func(obs_tp1_input.get(), num_actions, scope="q_func", noisy=noisy, reuse=True)
+            q_tp1_using_online_net = q_func(obs_tp1_input.get(), num_actions, scope="q_func", noisy=noisy, reuse=True, bootstrap=bootstrap)
 
             if bootstrap:
                 q_tp1_best = []
@@ -454,14 +457,12 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=
                 weighted_error.append(tf.reduce_mean(importance_weights_ph * errors[i]))
 
                 if grad_norm_clipping is not None:
-                    optimize_expr.append(U.minimize_and_clip(optimizer,
-                                                             weighted_error[i],
-                                                             var_list=q_func_heads,
-                                                             clip_val=grad_norm_clipping))
-                    optimize_expr.append(U.minimize_and_clip(optimizer,
-                                                             0.1 * weighted_error[i],
-                                                             var_list=q_func_convnets,
-                                                             clip_val=grad_norm_clipping))
+                    gradients = optimizer.compute_gradients(weighted_error[i], var_list=q_func_vars)
+                    for j, (grad, var) in enumerate(gradients):
+                        if grad is not None:
+                            gradients[j] = (tf.clip_by_norm(grad, grad_norm_clipping), var)
+                    optimize_expr.append(optimizer.apply_gradients(gradients))
+
                 else:
                     optimize_expr.append(optimizer.minimize(weighted_error[i], var_list=q_func_vars))
 

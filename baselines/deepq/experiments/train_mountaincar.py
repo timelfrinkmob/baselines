@@ -18,7 +18,7 @@ def main():
 
     # Enabling layer_norm here is import for parameter space noise!
 
-    model = deepq.models.mlp([64],bootstrap = args.bootstrap)
+    model = deepq.models.mlp([64])
     act = deepq.learn(
         env,
         q_func=model,

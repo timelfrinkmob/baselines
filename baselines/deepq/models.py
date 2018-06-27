@@ -28,7 +28,7 @@ def _mlp(hiddens, inpt, num_actions, scope, reuse=False,noisy = False, bootstrap
         return q_out
 
 
-def mlp(hiddens=[],bootstrap =False):
+def mlp(hiddens=[]):
     """This model takes as input an observation and returns values of all actions.
 
     Parameters
@@ -41,7 +41,7 @@ def mlp(hiddens=[],bootstrap =False):
     q_func: function
         q_function for DQN algorithm.
     """
-    return lambda *args, **kwargs: _mlp(hiddens, bootstrap,  *args, **kwargs)
+    return lambda *args, **kwargs: _mlp(hiddens,  *args, **kwargs)
 
 
 def _cnn_to_mlp(convs, hiddens, dueling, inpt, num_actions, scope, reuse=False, layer_norm=False):
