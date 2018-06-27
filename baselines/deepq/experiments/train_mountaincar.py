@@ -8,7 +8,8 @@ import argparse
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", type=str, default="MountainCar-v0", help="name of the game")
-    parser.add_argument("--noisy", type=int, default=0, help="name of the game")
+    parser.add_argument("--noisy", type=int, default=0, help="Noisy?")
+    parser.add_argument("--greedy", type=int, default=0, help="Greedy?")
     args = parser.parse_args()
 
 
@@ -26,7 +27,8 @@ def main():
         exploration_fraction=0.1,
         exploration_final_eps=0.1,
         print_freq=1,
-        noisy = args.noisy
+        noisy = args.noisy,
+        greedy = args.greedy
     )
     print("Saving model to mountaincar_model.pkl")
     act.save("mountaincar_model.pkl")

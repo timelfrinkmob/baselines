@@ -101,7 +101,8 @@ def learn(env,
           prioritized_replay_eps=1e-6,
           param_noise=False,
           callback=None,
-          noisy = False):
+          noisy = False,
+          greedy = False):
     """Train a deepq model.
 
     Parameters
@@ -254,6 +255,8 @@ def learn(env,
                 # greedily choose
                 action = act(np.array(obs)[None], stochastic=False)[0]
             else:
+                if greedy:
+                    update_eps = 0.1
                 action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
             env_action = action
             reset = False
@@ -294,7 +297,7 @@ def learn(env,
                 logger.record_tabular("reward", ep_rew)
                 logger.record_tabular("mean 100 episode reward", mean_100ep_reward)
                 if not noisy:
-                    logger.record_tabular("% time spent exploring", int(100 * exploration.value(t)))
+                    logger.record_tabular("% time spent exploring", int(100 * update_eps))
                 logger.dump_tabular()
 
             if (checkpoint_freq is not None and t > learning_starts and
