@@ -12,7 +12,7 @@ def main():
     args = parser.parse_args()
 
 
-    env = gym.make("MountainCar-v0")
+    env = gym.make(args.env)
 
     # Enabling layer_norm here is import for parameter space noise!
 
