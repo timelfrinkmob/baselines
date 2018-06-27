@@ -28,7 +28,7 @@ def _mlp(hiddens, inpt, num_actions, scope, reuse=False,noisy = False, bootstrap
         return q_out
 
 
-def mlp(hiddens=[],bootstrap):
+def mlp(hiddens=[],bootstrap =False):
     """This model takes as input an observation and returns values of all actions.
 
     Parameters
