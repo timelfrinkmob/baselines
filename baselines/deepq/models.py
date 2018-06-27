@@ -3,7 +3,7 @@ import tensorflow.contrib.layers as layers
 from baselines.common.tf_util import noisy_dense
 
 
-def _mlp(hiddens, inpt, num_actions, scope, reuse=False, layer_norm=False, noisy = False):
+def _mlp(hiddens, inpt, num_actions, scope, reuse=False,noisy = False):
     with tf.variable_scope(scope, reuse=reuse):
         out = inpt
         for hidden in hiddens:
@@ -29,7 +29,7 @@ def mlp(hiddens=[], layer_norm=False):
     q_func: function
         q_function for DQN algorithm.
     """
-    return lambda *args, **kwargs: _mlp(hiddens, layer_norm=layer_norm, *args, **kwargs)
+    return lambda *args, **kwargs: _mlp(hiddens,  *args, **kwargs)
 
 
 def _cnn_to_mlp(convs, hiddens, dueling, inpt, num_actions, scope, reuse=False, layer_norm=False):

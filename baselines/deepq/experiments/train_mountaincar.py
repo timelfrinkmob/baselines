@@ -1,13 +1,22 @@
 import gym
 
 from baselines import deepq
+import argparse
+
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--env", type=str, default="MountainCar-v0", help="name of the game")
+    parser.add_argument("--noisy", type=int, default=0, help="name of the game")
+    args = parser.parse_args()
+
+
     env = gym.make("MountainCar-v0")
+
     # Enabling layer_norm here is import for parameter space noise!
 
-    model = deepq.models.mlp([64], layer_norm=True)
+    model = deepq.models.mlp([64])
     act = deepq.learn(
         env,
         q_func=model,
@@ -16,8 +25,8 @@ def main():
         buffer_size=50000,
         exploration_fraction=0.1,
         exploration_final_eps=0.1,
-        print_freq=10,
-        noisy = True
+        print_freq=1,
+        noisy = args.noisy
     )
     print("Saving model to mountaincar_model.pkl")
     act.save("mountaincar_model.pkl")
