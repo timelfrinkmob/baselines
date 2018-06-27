@@ -7,10 +7,7 @@ def _mlp(hiddens, inpt, num_actions, scope, reuse=False, layer_norm=False, noisy
     with tf.variable_scope(scope, reuse=reuse):
         out = inpt
         for hidden in hiddens:
-            if noisy:
-                out = noisy_dense(out, name='noisy_fc1', size=hidden, activation_fn=tf.nn.relu)
-            else:
-                out = layers.fully_connected(out, num_outputs=hidden, activation_fn=tf.nn.relu)
+            out = noisy_dense(out, name='noisy_fc1', size=hidden, activation_fn=tf.nn.relu)
 
         if noisy:
             q_out = noisy_dense(out, name='noisy_out', size=num_actions)
