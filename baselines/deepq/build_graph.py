@@ -184,8 +184,7 @@ def build_act(make_obs_ph, q_func, num_actions, scope="deepq", reuse=None, noisy
 
         q_values = q_func(observations_ph.get(), num_actions, scope="q_func", noisy = noisy)
         if bootstrap:
-            with tf.device("/gpu:0"):
-                q_values = tf.gather(q_values, head)
+            q_values = tf.gather(q_values, head)
         deterministic_actions = tf.argmax(q_values, axis=1)
 
         batch_size = tf.shape(observations_ph.get())[0]
