@@ -14,11 +14,11 @@ def main():
     args = parser.parse_args()
 
 
-    env = gym.make(args.env,bootstrap = args.bootstrap)
+    env = gym.make(args.env)
 
     # Enabling layer_norm here is import for parameter space noise!
 
-    model = deepq.models.mlp([64])
+    model = deepq.models.mlp([64],bootstrap = args.bootstrap)
     act = deepq.learn(
         env,
         q_func=model,
