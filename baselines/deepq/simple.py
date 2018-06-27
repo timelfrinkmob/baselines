@@ -102,7 +102,8 @@ def learn(env,
           param_noise=False,
           callback=None,
           noisy = False,
-          greedy = False):
+          greedy = False,
+          bootstrap = False):
     """Train a deepq model.
 
     Parameters
@@ -186,7 +187,8 @@ def learn(env,
         optimizer=tf.train.AdamOptimizer(learning_rate=lr),
         gamma=gamma,
         grad_norm_clipping=10,
-        noisy = noisy
+        noisy = noisy,
+        bootstrap = bootstrap
     )
 
     act_params = {
@@ -221,6 +223,7 @@ def learn(env,
     saved_mean_reward = None
     obs = env.reset()
     reset = True
+    head = np.random.randint(10)  # Initial head initialisation
 
     with tempfile.TemporaryDirectory() as td:
         td = checkpoint_path or td
@@ -257,7 +260,10 @@ def learn(env,
             else:
                 if greedy:
                     update_eps = 0.1
-                action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
+                if bootstrap:
+                    action = act(np.array(obs)[None], head=head, update_eps=update_eps, **kwargs)[0]
+                else:
+                    action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
             env_action = action
             reset = False
             new_obs, rew, done, _ = env.step(env_action)
@@ -298,7 +304,10 @@ def learn(env,
                 logger.record_tabular("mean 100 episode reward", mean_100ep_reward)
                 if not noisy:
                     logger.record_tabular("% time spent exploring", int(100 * update_eps))
+                if bootstrap:
+                    logger.record_tabular("head", head)
                 logger.dump_tabular()
+                head = np.random.randint(10)
 
             if (checkpoint_freq is not None and t > learning_starts and
                     num_episodes > 100 and t % checkpoint_freq == 0):

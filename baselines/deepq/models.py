@@ -3,20 +3,32 @@ import tensorflow.contrib.layers as layers
 from baselines.common.tf_util import noisy_dense
 
 
-def _mlp(hiddens, inpt, num_actions, scope, reuse=False,noisy = False):
+def _mlp(hiddens, inpt, num_actions, scope, reuse=False,noisy = False, bootstrap = False):
     with tf.variable_scope(scope, reuse=reuse):
         out = inpt
         for hidden in hiddens:
             out = noisy_dense(out, name='noisy_fc1', size=hidden, activation_fn=tf.nn.relu)
 
-        if noisy:
-            q_out = noisy_dense(out, name='noisy_out', size=num_actions)
+        if bootstrap:
+            out_list = []
+            with tf.variable_scope("heads"):
+                for _ in range(10):
+                    scope_net = "action_value_head_" + str(_)
+                    with tf.variable_scope(scope_net):
+                        out_temp = out
+                        out_temp = layers.fully_connected(out_temp, num_outputs=num_actions, activation_fn=None)
+                    out_list.append(out_temp)
+            q_out = out_list
         else:
-            q_out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
+
+            if noisy:
+                q_out = noisy_dense(out, name='noisy_out', size=num_actions)
+            else:
+                q_out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
         return q_out
 
 
-def mlp(hiddens=[], layer_norm=False):
+def mlp(hiddens=[]):
     """This model takes as input an observation and returns values of all actions.
 
     Parameters
