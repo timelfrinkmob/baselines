@@ -100,7 +100,8 @@ def learn(env,
           prioritized_replay_beta_iters=None,
           prioritized_replay_eps=1e-6,
           param_noise=False,
-          callback=None):
+          callback=None,
+          noisy = False):
     """Train a deepq model.
 
     Parameters
@@ -184,7 +185,7 @@ def learn(env,
         optimizer=tf.train.AdamOptimizer(learning_rate=lr),
         gamma=gamma,
         grad_norm_clipping=10,
-        param_noise=param_noise
+        noisy = noisy
     )
 
     act_params = {
@@ -249,7 +250,11 @@ def learn(env,
                 kwargs['reset'] = reset
                 kwargs['update_param_noise_threshold'] = update_param_noise_threshold
                 kwargs['update_param_noise_scale'] = True
-            action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
+            if noisy:
+                # greedily choose
+                action = act(np.array(obs)[None], stochastic=False)[0]
+            else:
+                action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
             env_action = action
             reset = False
             new_obs, rew, done, _ = env.step(env_action)
@@ -260,6 +265,7 @@ def learn(env,
             episode_rewards[-1] += rew
             if done:
                 obs = env.reset()
+                ep_rew = episode_rewards[-1]
                 episode_rewards.append(0.0)
                 reset = True
 
@@ -285,8 +291,10 @@ def learn(env,
             if done and print_freq is not None and len(episode_rewards) % print_freq == 0:
                 logger.record_tabular("steps", t)
                 logger.record_tabular("episodes", num_episodes)
+                logger.record_tabular("reward", ep_rew)
                 logger.record_tabular("mean 100 episode reward", mean_100ep_reward)
-                logger.record_tabular("% time spent exploring", int(100 * exploration.value(t)))
+                if not noisy:
+                    logger.record_tabular("% time spent exploring", int(100 * exploration.value(t)))
                 logger.dump_tabular()
 
             if (checkpoint_freq is not None and t > learning_starts and
