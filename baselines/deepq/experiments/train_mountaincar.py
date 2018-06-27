@@ -17,7 +17,7 @@ def main():
         exploration_fraction=0.1,
         exploration_final_eps=0.1,
         print_freq=10,
-        noisy = False
+        noisy = True
     )
     print("Saving model to mountaincar_model.pkl")
     act.save("mountaincar_model.pkl")
