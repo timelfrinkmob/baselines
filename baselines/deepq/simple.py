@@ -103,7 +103,9 @@ def learn(env,
           callback=None,
           noisy = False,
           greedy = False,
-          bootstrap = False):
+          bootstrap = False,
+          seed = 0,
+          env_name= None):
     """Train a deepq model.
 
     Parameters
@@ -225,6 +227,12 @@ def learn(env,
     reset = True
     head = np.random.randint(10)  # Initial head initialisation
 
+
+    savedir = "models/" + env_name + "_" + str(seed) + "_" + str(bootstrap) + "_" + str(noisy) + "_" + str(greedy) + "_" + str(max_timesteps)
+    logger.configure(savedir,['json','stdout','csv'])
+
+
+
     with tempfile.TemporaryDirectory() as td:
         td = checkpoint_path or td
 
@@ -241,6 +249,7 @@ def learn(env,
                     break
             # Take action and update exploration to the newest value
             kwargs = {}
+
             if not param_noise:
                 update_eps = exploration.value(t)
                 update_param_noise_threshold = 0.
@@ -266,6 +275,8 @@ def learn(env,
                     action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
             env_action = action
             reset = False
+            #env.render()
+
             new_obs, rew, done, _ = env.step(env_action)
             # Store transition in the replay buffer.
             replay_buffer.add(obs, action, rew, new_obs, float(done))
