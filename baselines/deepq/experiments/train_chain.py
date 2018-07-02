@@ -43,7 +43,7 @@ def main():
         greedy = args.greedy,
         bootstrap = args.bootstrap,
         seed = args.seed,
-        env_name = 'Chain' + args.n
+        env_name = 'Chain' + str(args.n)
     )
     print("Saving model to mountaincar_model.pkl")
     act.save("mountaincar_model.pkl")
